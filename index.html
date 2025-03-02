@@ -1,136 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Real-Time Chat App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #conversations {
-            height: 200px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            overflow-y: auto;
-        }
-        #messages {
-            height: 300px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            overflow-y: auto;
-        }
-        .message {
-            margin-bottom: 10px;
-            padding: 5px;
-            border-radius: 5px;
-            background-color: #f0f0f0;
-        }
-        input, button {
-            padding: 8px;
-            margin: 5px 0;
-        }
-    </style>
-</head>
-<body>
-    <h1>Real-Time Chat</h1>
-    <div id="conversations">
-        <h3>Conversations</h3>
-        <ul id="conversation-list"></ul>
-    </div>
-    <div id="messages"></div>
-    <input type="text" id="name" placeholder="Your name">
-    <input type="text" id="message" placeholder="Type your message">
-    <button onclick="sendMessage()">Send</button>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Chat App</title>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
 
-    <script>
-        // Your Firebase configuration
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA74eCXJ2AltnR2uIQORBIe0XswD-Htxik",
             authDomain: "kaustav-4cb31.firebaseapp.com",
             projectId: "kaustav-4cb31",
-            storageBucket: "kaustav-4cb31.firebasestorage.app",
+            storageBucket: "kaustav-4cb31.appspot.com",
             messagingSenderId: "915698521419",
             appId: "1:915698521419:web:1e3be69c47a7b2276104ce",
             measurementId: "G-KX74E8HV1G"
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
 
-        let currentConversationId = null;
+        // Function to send message
+        window.sendMessage = function () {
+            let username = document.getElementById("username").value;
+            let message = document.getElementById("message").value;
 
-        // Function to create a new conversation
-        function createConversation() {
-            const conversationRef = database.ref('conversations').push();
-            currentConversationId = conversationRef.key;
-            loadConversation(currentConversationId);
-            updateConversationList();
-        }
-
-        // Function to load a conversation
-        function loadConversation(conversationId) {
-            currentConversationId = conversationId;
-            const messagesRef = database.ref(`conversations/${conversationId}/messages`);
-
-            // Clear existing messages
-            document.getElementById('messages').innerHTML = '';
-
-            // Listen for new messages
-            messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
-                const data = snapshot.val();
-                const messagesDiv = document.getElementById('messages');
-
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message';
-                messageElement.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
-
-                messagesDiv.appendChild(messageElement);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-        }
-
-        // Function to send a message
-        function sendMessage() {
-            const name = document.getElementById('name').value;
-            const message = document.getElementById('message').value;
-
-            if (name && message && currentConversationId) {
-                database.ref(`conversations/${currentConversationId}/messages`).push({
-                    sender: name,
-                    message: message,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
-                document.getElementById('message').value = '';
+            if (username && message) {
+                push(ref(db, "messages"), { name: username, text: message });
+                document.getElementById("message").value = "";
             }
-        }
+        };
 
-        // Function to update the conversation list
-        function updateConversationList() {
-            const conversationList = document.getElementById('conversation-list');
-            conversationList.innerHTML = '';
-
-            database.ref('conversations').on('value', (snapshot) => {
-                snapshot.forEach((childSnapshot) => {
-                    const conversationId = childSnapshot.key;
-                    const li = document.createElement('li');
-                    li.innerHTML = `<a href="#" onclick="loadConversation('${conversationId}')">Conversation ${conversationId}</a>`;
-                    conversationList.appendChild(li);
-                });
+        // Listen for new messages
+        window.onload = function () {
+            const messagesRef = ref(db, "messages");
+            onChildAdded(messagesRef, (snapshot) => {
+                let msg = snapshot.val();
+                let msgBox = document.createElement("div");
+                msgBox.classList.add("msg");
+                msgBox.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}`;
+                document.getElementById("messages").appendChild(msgBox);
             });
-        }
-
-        // Initialize the app
-        createConversation();
-        updateConversationList();
+        };
     </script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat { max-width: 400px; margin: auto; padding: 10px; border: 1px solid #ccc; }
+        #messages { height: 300px; overflow-y: scroll; border-bottom: 1px solid #ccc; }
+        .msg { padding: 5px; text-align: left; }
+        input, button { padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Social Media Chat App</h2>
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="username" placeholder="Enter your name">
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
 </body>
 </html>
