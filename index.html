@@ -37,7 +37,7 @@
               class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded w-full sm:w-auto"
               id="sendButton"
             >
-              Ask Dom!
+              Ask iamkkronly!
             </button>
           </div>
         </div>
@@ -80,7 +80,7 @@
             chatId: chatId,
             appId: "break-without",
             systemPrompt: systemPrompt,
-            message: initChat ? "A very short welcome message from Dominic Toretto" : message, // Change the welcome message here
+            message: initChat ? "A very short welcome message from iamkkronly" : message, // Change the welcome message here
           })
         );
       });
@@ -96,12 +96,12 @@
       websocket.onclose = (event) => {
         if (event.code === 1000) {
           receiving = false;
-          sendButton.textContent = "Ask Dom!";
+          sendButton.textContent = "Ask iamkkronly!";
         } else {
           messageElement.textContent += "Error getting response from server. Refresh the page and try again.";
           chatbox.scrollTop = chatbox.scrollHeight;
           receiving = false;
-          sendButton.textContent = "Ask Dom!";
+          sendButton.textContent = "Ask iamkkronly!";
         }
       };
     }
@@ -124,7 +124,7 @@
       } else if (receiving && websocket) {
         websocket.close(1000);
         receiving = false;
-        sendButton.textContent = "Ask Dom!";
+        sendButton.textContent = "Ask iamkkronly!";
       }
     });
 
