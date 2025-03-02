@@ -7,9 +7,9 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        // Import Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -25,15 +25,20 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
-        // Function to send messages
+        // Function to send message
         window.sendMessage = function () {
-            let username = document.getElementById("username").value;
-            let message = document.getElementById("message").value;
+            let username = document.getElementById("username").value.trim();
+            let message = document.getElementById("message").value.trim();
 
             if (username && message) {
-                push(ref(db, "messages"), { name: username, text: message, timestamp: Date.now() });
+                push(ref(db, "messages"), {
+                    name: username,
+                    text: message,
+                    timestamp: serverTimestamp()
+                });
                 document.getElementById("message").value = "";
             }
         };
@@ -41,30 +46,105 @@
         // Listen for new messages in real-time
         window.onload = function () {
             const messagesRef = ref(db, "messages");
-
             onChildAdded(messagesRef, (snapshot) => {
                 let msg = snapshot.val();
                 let msgBox = document.createElement("div");
                 msgBox.classList.add("msg");
-                msgBox.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}`;
+
+                let time = new Date(msg.timestamp ? msg.timestamp : Date.now());
+                let timeString = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                msgBox.innerHTML = `<strong>${msg.name}</strong> <span class="time">${timeString}</span><br>${msg.text}`;
                 document.getElementById("messages").appendChild(msgBox);
-                document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight; // Auto-scroll to the latest message
+
+                // Auto-scroll to the latest message
+                document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
             });
         };
     </script>
 
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #chat { max-width: 400px; margin: auto; padding: 10px; border: 1px solid #ccc; }
-        #messages { height: 300px; overflow-y: auto; border-bottom: 1px solid #ccc; padding: 10px; background: #f9f9f9; }
-        .msg { padding: 5px; text-align: left; background: #e3f2fd; margin: 5px 0; border-radius: 5px; }
-        input, button { padding: 10px; margin-top: 10px; width: 90%; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+        }
+
+        #chat-container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #messages {
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .msg {
+            background: #0084ff;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 75%;
+            text-align: left;
+            margin: 5px auto 5px 0;
+            position: relative;
+        }
+
+        .msg strong {
+            font-size: 12px;
+        }
+
+        .msg .time {
+            font-size: 10px;
+            color: #ddd;
+            position: absolute;
+            bottom: 2px;
+            right: 8px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 10px 5px;
+            width: 45%;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        #username {
+            width: 40%;
+            border: 1px solid #ccc;
+        }
+
+        #message {
+            width: 50%;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #0084ff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005ecb;
+        }
     </style>
 </head>
 <body>
 
-    <h2>Real-Time Chat App</h2>
-    <div id="chat">
+    <div id="chat-container">
+        <h2>Real-Time Chat</h2>
         <div id="messages"></div>
         <input type="text" id="username" placeholder="Enter your name">
         <input type="text" id="message" placeholder="Type a message">
